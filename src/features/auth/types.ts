@@ -6,11 +6,16 @@ export type LocalUser = {
   createdAt: string;
 };
 
+export type SupabaseUser = {
+  id: string;
+  email: string | null;
+  nickname?: string | null;
+};
+
 export type AuthState = {
-  currentUser: LocalUser | null;
-  users: LocalUser[];
-  login: (username: string, password: string) => boolean;
-  logout: () => void;
-  signup: (nickname: string, username: string, password: string) => boolean;
-  updateNickname: (nickname: string) => void;
+  currentUser: SupabaseUser | null;
+  login: (email: string, password: string) => Promise<{ error?: string }>;
+  logout: () => Promise<void>;
+  signup: (nickname: string, email: string, password: string) => Promise<{ error?: string }>;
+  updateNickname: (nickname: string) => Promise<{ error?: string }>;
 }; 

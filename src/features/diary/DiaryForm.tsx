@@ -18,6 +18,7 @@ const EMOTIONS: Emotion[] = [
 export default function DiaryForm() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const addEntry = useDiaryStore((s) => s.addEntry);
+  const fetchUserEntries = useDiaryStore((s) => s.fetchUserEntries);
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [emotion, setEmotion] = useState<Emotion>(EMOTIONS[0]);
   const [hashtags, setHashtags] = useState<string>('');
@@ -27,16 +28,16 @@ export default function DiaryForm() {
 
   if (!currentUser) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    addEntry({
-      userId: currentUser.id,
-      date,
-      emotion,
+    if (!currentUser) return;
+    await addEntry(currentUser.id, date, {
+      emotion: emotion.emoji + ' ' + emotion.label,
       hashtags: hashtags.split(' ').filter(Boolean),
       memo,
       isPublic,
     });
+    await fetchUserEntries(currentUser.id);
     setSuccess(true);
     setMemo('');
     setHashtags('');

@@ -1,56 +1,63 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { AuthState, LocalUser } from '../features/auth/types';
+import { AuthState, SupabaseUser } from '../features/auth/types';
+import { supabase } from '../utils/supabaseClient';
 
-function generateId() {
-  return Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+function mapSupabaseUser(user: any): SupabaseUser {
+  return {
+    id: user.id,
+    email: user.email,
+    nickname: user.user_metadata?.nickname || null,
+  };
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      currentUser: null,
-      users: [],
-      login: (username, password) => {
-        const user = get().users.find(
-          (u) => u.username === username && u.password === password
-        );
-        if (user) {
-          set({ currentUser: user });
-          return true;
-        }
-        return false;
-      },
-      logout: () => set({ currentUser: null }),
-      signup: (nickname, username, password) => {
-        if (get().users.some((u) => u.username === username)) return false;
-        const newUser: LocalUser = {
-          id: generateId(),
-          nickname,
-          username,
-          password,
-          createdAt: new Date().toISOString(),
-        };
-        set((state) => ({
-          users: [...state.users, newUser],
-          currentUser: newUser,
-        }));
-        return true;
-      },
-      updateNickname: (nickname) => {
-        const user = get().currentUser;
-        if (!user) return;
-        set((state) => ({
-          currentUser: { ...user, nickname },
-          users: state.users.map((u) =>
-            u.id === user.id ? { ...u, nickname } : u
-          ),
-        }));
-      },
-    }),
-    {
-      name: 'auth-store',
-      partialize: (state) => ({ users: state.users, currentUser: state.currentUser }),
+export const useAuthStore = create<AuthState>((set) => {
+  // 세션 동기화: 앱 최초 로드 시 및 인증 상태 변경 시 currentUser 자동 갱신
+  supabase.auth.getUser().then(({ data }) => {
+    if (data?.user) {
+      set({ currentUser: mapSupabaseUser(data.user) });
     }
-  )
-); 
+  });
+  const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    if (session?.user) {
+      set({ currentUser: mapSupabaseUser(session.user) });
+    } else {
+      set({ currentUser: null });
+    }
+  });
+
+  return {
+    currentUser: null,
+    login: async (email, password) => {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error || !data.user) {
+        return { error: error?.message || '로그인 실패' };
+      }
+      set({ currentUser: mapSupabaseUser(data.user) });
+      return {};
+    },
+    logout: async () => {
+      await supabase.auth.signOut();
+      set({ currentUser: null });
+    },
+    signup: async (nickname, email, password) => {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { nickname } },
+      });
+      if (error || !data.user) {
+        return { error: error?.message || '회원가입 실패' };
+      }
+      set({ currentUser: mapSupabaseUser(data.user) });
+      return {};
+    },
+    updateNickname: async (nickname) => {
+      const { data, error } = await supabase.auth.updateUser({ data: { nickname } });
+      if (error || !data.user) {
+        return { error: error?.message || '닉네임 변경 실패' };
+      }
+      set({ currentUser: mapSupabaseUser(data.user) });
+      return {};
+    },
+  };
+}); 

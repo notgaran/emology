@@ -4,30 +4,45 @@ import { useAuthStore } from '../../store/authStore';
 
 export default function LoginForm() {
   const [isSignup, setIsSignup] = useState(false);
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [error, setError] = useState('');
   const login = useAuthStore((s) => s.login);
   const signup = useAuthStore((s) => s.signup);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    const trimmedEmail = email.trim();
+    const trimmedNickname = nickname.trim();
+    console.log('회원가입 시도:', { trimmedEmail, trimmedNickname, password });
     if (isSignup) {
-      if (!nickname || !username || !password) {
+      if (!trimmedNickname || !trimmedEmail || !password) {
         setError('모든 항목을 입력하세요.');
         return;
       }
-      const ok = signup(nickname, username, password);
-      if (!ok) setError('이미 존재하는 아이디입니다.');
-    } else {
-      if (!username || !password) {
-        setError('아이디와 비밀번호를 입력하세요.');
+      if (trimmedNickname.length < 2) {
+        setError('닉네임은 2자 이상이어야 합니다.');
         return;
       }
-      const ok = login(username, password);
-      if (!ok) setError('아이디 또는 비밀번호가 올바르지 않습니다.');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(trimmedEmail)) {
+        setError('올바른 이메일 형식을 입력하세요.');
+        return;
+      }
+      if (password.length < 6) {
+        setError('비밀번호는 6자 이상이어야 합니다.');
+        return;
+      }
+      const result = await signup(trimmedNickname, trimmedEmail, password);
+      if (result.error) setError(result.error);
+    } else {
+      if (!trimmedEmail || !password) {
+        setError('이메일과 비밀번호를 입력하세요.');
+        return;
+      }
+      const result = await login(trimmedEmail, password);
+      if (result.error) setError(result.error);
     }
   };
 
@@ -47,9 +62,9 @@ export default function LoginForm() {
         )}
         <input
           className="w-full border rounded px-3 py-2"
-          placeholder="아이디"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          placeholder="이메일"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <input
           className="w-full border rounded px-3 py-2"
