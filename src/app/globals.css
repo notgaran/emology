@@ -20,7 +20,62 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f6f8fa;
+}
+
+input, textarea, select {
+  background-color: #fff;
+  color: #222;
+  border: 1.5px solid #b6c3d6;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid #5b8ecb;
+  border-color: #5b8ecb;
+}
+
+input:disabled, textarea:disabled, button:disabled {
+  background-color: #e5e7eb;
+  color: #b0b0b0;
+}
+
+::placeholder {
+  color: #b0b8c1;
+  opacity: 1;
+}
+
+button {
+  transition: background 0.2s, color 0.2s;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.bg-pastel-blue {
+  background-color: #5b8ecb !important;
+  color: #fff !important;
+}
+.bg-pastel-blue\/80 {
+  background-color: #7baee0cc !important;
+  color: #fff !important;
+}
+.text-pastel-blue {
+  color: #2563eb !important;
+}
+.ring-pastel-blue {
+  --tw-ring-color: #5b8ecb;
+}
+
+/* 카드/폼 배경 */
+.bg-white {
+  background-color: #fff;
+}
+
+/* 그림자 더 진하게 */
+.shadow, .shadow-sm, .shadow-lg {
+  box-shadow: 0 2px 12px 0 #b6c3d6aa;
+}
+
+/* 버튼 hover 효과 */
+button:not(:disabled):hover, .bg-pastel-blue:hover, .bg-pastel-blue\/80:hover {
+  filter: brightness(0.92);
 }
