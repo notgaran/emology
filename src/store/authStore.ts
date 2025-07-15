@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { AuthState, SupabaseUser } from '../features/auth/types';
 import { supabase } from '../utils/supabaseClient';
+import { User } from '@supabase/supabase-js';
 
-function mapSupabaseUser(user: any): SupabaseUser {
+function mapSupabaseUser(user: User): SupabaseUser {
   return {
     id: user.id,
     email: user.email,
-    nickname: user.user_metadata?.nickname || null,
+    nickname: typeof user.user_metadata?.nickname === 'string' ? user.user_metadata.nickname : null,
   };
 }
 
